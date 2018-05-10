@@ -1,0 +1,107 @@
+1. Install page base
+mix archive.install https://github.com/phoenixframework/archives/raw/master/phoenix_new.ez
+2. mix help
+3. mix new name_app --umbrella
+4. in dir name_app/app
+	mix new rsvp --sup
+5. mix phoenix.new name_web --no-ecto
+6. in name_web
+	mix phoenix.server
+7. https://hex.pm/packages/ecto
+8. copy in mix.exs ...{:ecto, "~> 2.2"} , {:postgrex, "~> 0.13.5"}
+9. and  add in def application .... :postgrex,  :ecto
+
+  def application do
+    [applications: [:logger, :postgrex, :ecto], *****
+     mod: {Rsvp, []}]
+  end
+
+ defp deps do
+    [{:ecto, "~> 2.2"} , {:postgrex, "~> 0.13.5"}] *****
+  end
+
+10. mix deps.get ... in root app dir
+11. config.exs ... database config 
+
+config :rsvp, ecto_repos: [Rsvp.Repo]
+
+config :rsvp, Rsvp.Repo,
+  adapter: Ecto.Adapters.Postgres,
+  database: "rsvp",
+  username: "postgres",
+  password: "cococito"
+
+
+12. repo.ex ..config
+
+defmodule Rsvp.Repo do
+    use Ecto.Repo, otp_app: :rsvp
+end
+
+
+13. rsvp.ex ..config
+
+  worker(Rsvp.Repo, []) ...children
+
+      opts = [strategy: :one_for_one, name: Rsvp.Supervisor]
+    Supervisor.start_link(children, opts)
+
+
+14. mix ecto
+15. mix ecto.create
+16. connect to database postgres #\c database_name
+17. create dir and file in root/lib/events/events.ex
+defmodule Rsvp.Events do
+    use Ecto.Schema
+
+    schema "events" do
+        field :title, :string
+        field :location, :string
+        field :date, Ecto.DateTime
+        field :description, :string
+
+        timestamps
+    end
+end
+
+
+
+18. create seed
+19. cd apps/app_name  ... mix ecto
+20. mix ecto.gen.migration add_events_table
+21. look in apps/app_name/priv/repo/migrations/new_table
+22. add field to the new_table_migration 
+defmodule Rsvp.Repo.Migrations.AddEventsTable do
+  use Ecto.Migration
+
+  def change do
+    create table(:events) do
+      add :title, :string, size: 50
+      add :location, :string, size: 100
+      add :date, :utc_datetime
+
+      timestamps
+    end
+  end
+end
+
+...
+defmodule Rsvp.Repo.Migrations.AddDescriptionToEvent do
+  use Ecto.Migration
+
+  def change do
+    alter table(:events) do
+      add :description, :string, size: 1000
+    end
+  end
+end
+
+
+
+23. mix ecto.migrate
+24. in postgres  #\dt see changes
+25. \d+ events  to see schema structure
+26. select * from schema_migrations
+27. alter table with function ... mix ecto.gen.migration add_description_to_event
+28. add field to alter table
+insert into events(title,location,date,inserted_at,updated_at)values('Elixir Meetup','Omaha','2017-01-18 17:00:00',now(),now());
